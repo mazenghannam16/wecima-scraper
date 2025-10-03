@@ -1,5 +1,8 @@
 name: Fetch Wecima RSS
 
+permissions:
+  contents: write   # السماح للـ Actions بالكتابة على الريبو
+
 on:
   schedule:
     - cron: '0 */6 * * *'   # كل 6 ساعات
