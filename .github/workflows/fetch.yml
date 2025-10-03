@@ -1,4 +1,4 @@
-name: Fetch Wecima RSS
+name: Fetch Wecima Homepage
 
 permissions:
   contents: write   # السماح للـ Actions بالكتابة على الريبو
@@ -23,8 +23,8 @@ jobs:
       - name: Install dependencies
         run: npm install puppeteer xml2js
 
-      - name: Run fetch script
-        run: node fetch_rss.js > movies.json
+      - name: Run fetch_home.js script
+        run: node fetch_home.js > movies.json
 
       - name: Commit movies.json
         run: |
