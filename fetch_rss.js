@@ -11,18 +11,37 @@ const { parseStringPromise } = require('xml2js');
     });
 
     const page = await browser.newPage();
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36');
+    await page.setUserAgent(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+    );
+    await page.setExtraHTTPHeaders({
+      'Accept-Language': 'ar,en-US;q=0.9,en;q=0.8'
+    });
+
+    // افتح الرابط وانتظر الصفحة تحمل
     await page.goto(rssUrl, { waitUntil: 'networkidle2', timeout: 60000 });
 
-    let content = await page.content();
-    const xmlStart = content.indexOf('<?xml');
-    if (xmlStart !== -1) content = content.slice(xmlStart);
+    // ناخد النص الخام (لو Cloudflare رجع HTML هيبان هنا)
+    let content = await page.evaluate(() => document.body.innerText || document.body.textContent || "");
+
     await browser.close();
 
+    // نتأكد إن فيه RSS
+    const xmlStart = content.indexOf('<?xml');
+    if (xmlStart !== -1) {
+      content = content.slice(xmlStart);
+    }
+
+    if (!content.includes("<rss")) {
+      throw new Error("لم أستطع الحصول على RSS (الصفحة أرجعت HTML مش XML)");
+    }
+
+    // حلّل الـ XML
     const parsed = await parseStringPromise(content, { explicitArray: false, trim: true });
     const items = parsed?.rss?.channel?.item ?? [];
     const arr = Array.isArray(items) ? items : [items];
 
+    // استخرج الأفلام
     const movies = arr.map(it => {
       const title = it.title || '';
       const link = it.link || '';
@@ -34,6 +53,8 @@ const { parseStringPromise } = require('xml2js');
     });
 
     console.log(JSON.stringify(movies, null, 2));
+    process.exit(0);
+
   } catch (err) {
     console.error("Error:", err.message || err);
     process.exit(1);
